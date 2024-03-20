@@ -1,6 +1,6 @@
 from backend.DataIntegrityChecker import DataIntegrityChecker
 from backend.enumHash import Hash
-
+import logging
 
 class SHA(DataIntegrityChecker):
 
@@ -26,8 +26,10 @@ class SHA(DataIntegrityChecker):
             hash_value = hash_object.hexdigest()
 
             if hash_value == self._data[file_path]:
+                logging.info(f"Integrity {self.typeHash} of '{file_path}' verified.")
                 print(f"Integrity of '{file_path}' verified.")
                 return True
             else:
+                logging.warning(f"Integrity check {self.typeHash} failed for '{file_path}'.")
                 print(f"Integrity check failed for '{file_path}'.")
                 return False

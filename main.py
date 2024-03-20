@@ -1,4 +1,3 @@
-#
 
 from backend.SHA import SHA
 from backend.Stribog import Stribog

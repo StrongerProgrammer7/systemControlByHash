@@ -4,7 +4,7 @@ from Crypto.Hash import SHA512
 from Crypto.Hash import SHA256
 from backend.utils import size512Or256, _validate_type
 from backend.enumHash import Hash
-
+import logging
 
 class DataIntegrityChecker:
 
@@ -18,12 +18,14 @@ class DataIntegrityChecker:
         self.typeHash = typeHash
         self.sizeHash = sizeHash
         self._set_system_hash()
+        self._setup_logging()
 
     def hashingFile(self, file_path):
         if os.path.exists(file_path):
             print("")#"Overload methods")
         else:
             print(f"File '{file_path}' not found.")
+            logging.error(f"File '{file_path}' not found.")
             return False
 
     def check_integrity(self, file_path):
@@ -31,6 +33,7 @@ class DataIntegrityChecker:
             print("")#"Overload methods")
         else:
             print(f"File '{file_path}' not found in integrity records.")
+            logging.error(f"File '{file_path}' not found in integrity records.")
 
     def gethashFile(self, pathFile):
         return self._data[pathFile]
@@ -53,3 +56,7 @@ class DataIntegrityChecker:
             self._systemHash = _pystribog.StribogHash(self.sizeHash)
         elif self.typeHash == Hash.SHA:
             self._systemHash = SHA256 if self.sizeHash == 256 else SHA512
+
+    def _setup_logging(self):
+        logging.basicConfig(filename='data_integrity.log', level=logging.INFO,
+                            format='%(asctime)s - %(levelname)s - %(message)s')
