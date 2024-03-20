@@ -35,4 +35,4 @@ class SHA(DataIntegrityChecker):
             else:
                 logging.warning(f"Integrity check {self.typeHash} failed for '{file_path}'.")
                 print(f"Integrity check failed for '{file_path}'.")
-                return False
+                return self.getDifferenceFile(file_path)

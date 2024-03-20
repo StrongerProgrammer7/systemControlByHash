@@ -11,6 +11,11 @@ def add_text_to_file(file_path, text):
         print("Path doesn't exists!")
         return False
 
+def clear_and_write(input_file, output_file):
+    with open(input_file, 'r') as f:
+        content = f.read()
+    with open(output_file, 'w') as f:
+        f.write(content)
 
 def size512Or256(size):
     return size == 512 or size == 256
