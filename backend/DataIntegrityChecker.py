@@ -1,13 +1,14 @@
-import _pystribog
-import os
 from Crypto.Hash import SHA512
 from Crypto.Hash import SHA256
-from backend.utils import size512Or256, _validate_type
-from backend.enumHash import Hash
-import logging
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from base64 import b64decode,b64encode
+import os
+import logging
+
+import _pystribog
+from backend.utils import size512Or256, _validate_type
+from backend.enumHash import Hash
 
 class DataIntegrityChecker:
 

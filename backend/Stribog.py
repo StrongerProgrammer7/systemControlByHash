@@ -1,7 +1,6 @@
 from backend.DataIntegrityChecker import DataIntegrityChecker,Hash
 import logging
 
-
 class Stribog(DataIntegrityChecker):
 
     def __init__(self, sizeHash=512):

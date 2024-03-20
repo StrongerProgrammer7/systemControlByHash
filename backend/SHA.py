@@ -1,5 +1,4 @@
-from backend.DataIntegrityChecker import DataIntegrityChecker
-from backend.enumHash import Hash
+from backend.DataIntegrityChecker import DataIntegrityChecker,Hash
 import logging
 
 class SHA(DataIntegrityChecker):
