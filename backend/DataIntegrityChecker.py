@@ -1,43 +1,34 @@
 import _pystribog
 import os
+from Crypto.Hash import SHA512
+from Crypto.Hash import SHA256
+from backend.utils import size512Or256, _validate_type
+from backend.enumHash import Hash
 
 
 class DataIntegrityChecker:
 
-    def __init__(self, sizeHash=512):
+    def __init__(self, sizeHash=512, typeHash=Hash.STRIBOG):
+        _validate_type(sizeHash, int, "sizeHash")
+        _validate_type(typeHash, Hash, "typeHash")
+
+        if not size512Or256(sizeHash):
+            raise ValueError("Size hash must be 512 or 256")
         self._data = {}
-        if sizeHash == 512:
-            self._stribog = _pystribog.StribogHash(_pystribog.Hash512)
-        else:
-            self._stribog = _pystribog.StribogHash(_pystribog.Hash256)
+        self.typeHash = typeHash
+        self.sizeHash = sizeHash
+        self._set_system_hash()
 
     def hashingFile(self, file_path):
         if os.path.exists(file_path):
-            with open(file_path, "rb") as file:
-                data = file.read()
-                self._stribog.update(data)
-                hash_value = self._stribog.hexdigest()
-                self._data[file_path] = hash_value
-                print(f"File '{file_path}' added with hash value: {hash_value}")
+            print("")#"Overload methods")
         else:
             print(f"File '{file_path}' not found.")
+            return False
 
     def check_integrity(self, file_path):
         if file_path in self._data:
-            with open(file_path, "rb") as file:
-                data = file.read()
-
-                self._stribog.clear()
-                self._stribog.update(data)
-                hash_value = self._stribog.hexdigest()
-
-                if hash_value == self._data[file_path]:
-                    print(f"Integrity of '{file_path}' verified.")
-                    return True
-                else:
-                    print(f"Integrity check failed for '{file_path}'.")
-                    return False
-
+            print("")#"Overload methods")
         else:
             print(f"File '{file_path}' not found in integrity records.")
 
@@ -48,6 +39,17 @@ class DataIntegrityChecker:
         if size != _pystribog.Hash256 and size != _pystribog.Hash512:
             print("Not correct size")
             return False
-        self._stribog = _pystribog.StribogHash(size)
-        print("Succes change")
-        return True
+        self.sizeHash = size
+        self._set_system_hash()
+
+    def changeTypeHash(self, typeHash):
+        _validate_type(typeHash, str, "typeHash")
+
+        self.typeHash = typeHash
+        self._set_system_hash()
+
+    def _set_system_hash(self):
+        if self.typeHash == Hash.STRIBOG:
+            self._systemHash = _pystribog.StribogHash(self.sizeHash)
+        elif self.typeHash == Hash.SHA:
+            self._systemHash = SHA256 if self.sizeHash == 256 else SHA512
