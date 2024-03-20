@@ -27,8 +27,6 @@ class DataIntegrityChecker:
         self._setup_logging()
 
 
-
-
     def hashingFile(self, file_path):
         if os.path.exists(file_path):
             print("")#"Overload methods")
@@ -44,8 +42,12 @@ class DataIntegrityChecker:
             print(f"File '{file_path}' not found in integrity records.")
             logging.error(f"File '{file_path}' not found in integrity records.")
 
-    def gethashFile(self, pathFile):
-        return self._data[pathFile]
+    def getEncryptDataFile(self, file_path):
+        return {
+            self._data[file_path]['encrypted_hash'],
+            self._data[file_path]['nonce'],
+            self._data[file_path]['tag'],
+        }
 
     def changeHashSize(self, size):
         if size != _pystribog.Hash256 and size != _pystribog.Hash512:
@@ -89,7 +91,6 @@ class DataIntegrityChecker:
         print(f"Report generated: {report_file}")
 
 
-
     def _get_hash(self, data, hash_function):
         if self.typeHash != Hash.STRIBOG:
             hash_function = hash_function.new(data)
@@ -115,6 +116,7 @@ class DataIntegrityChecker:
                            self._data[file_path]['nonce'],
                            self._data[file_path]['tag'],
                            b64decode(self._data[file_path]['key']))
+
     def _set_system_hash(self):
         if self.typeHash == Hash.STRIBOG:
             self._systemHash = _pystribog.StribogHash(self.sizeHash)
