@@ -13,8 +13,8 @@ class SHAKE(DataIntegrityChecker):
             data = file.read()
 
             hash_value = self._getHashShake(data)
+            super()._pushHashOrEncryptToData(super()._recordEncryptHash, hash_value, file_path)
 
-            super()._recordEncryptHash(hash_value,file_path)
             print(f"File '{file_path}' added with hash value: {hash_value}")
             logging.info(f"File '{file_path}' added with hash value: {hash_value}")
             return True
@@ -26,8 +26,9 @@ class SHAKE(DataIntegrityChecker):
 
             hash_value = self._getHashShake(data)
 
-            decrypted_hash = super()._getDecryptHash(file_path)
-            if hash_value == decrypted_hash:
+            newHash = super()._getHash(super()._getDecryptHash,file_path)
+
+            if hash_value == newHash:
                 logging.info(f"Integrity {self.typeHash} of '{file_path}' verified.")
                 print(f"Integrity of '{file_path}' verified.")
                 return True

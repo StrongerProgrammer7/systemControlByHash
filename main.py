@@ -18,6 +18,6 @@ def generateReport(hash):
     hash.generate_report()
 
 if __name__ == '__main__':
-    checker = SHAKE(256,encryptMethod=EncryptMethods.DES)
+    checker = Stribog(256,encryptMethod=EncryptMethods.DES)
     workHash(checker)
     generateReport(checker)
