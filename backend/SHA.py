@@ -13,7 +13,8 @@ class SHA(DataIntegrityChecker):
             data = file.read()
             hash_object = self._systemHash.new(data)
             hash_value = hash_object.hexdigest()
-            self._data[file_path] = hash_value
+            #self._data[file_path] = hash_value
+            super()._recordEncryptHash(hash_value,file_path)
             print(f"File '{file_path}' added with hash value: {hash_value}")
             logging.info(f"File '{file_path}' added with hash value: {hash_value}")
             return True
@@ -25,8 +26,8 @@ class SHA(DataIntegrityChecker):
 
             hash_object = self._systemHash.new(data)
             hash_value = hash_object.hexdigest()
-
-            if hash_value == self._data[file_path]:
+            decrypted_hash = super()._getDecryptHash(file_path)
+            if hash_value == decrypted_hash:
                 logging.info(f"Integrity {self.typeHash} of '{file_path}' verified.")
                 print(f"Integrity of '{file_path}' verified.")
                 return True

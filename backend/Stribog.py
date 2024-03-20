@@ -1,5 +1,4 @@
-from backend.DataIntegrityChecker import DataIntegrityChecker
-from backend.enumHash import Hash
+from backend.DataIntegrityChecker import DataIntegrityChecker,Hash
 import logging
 
 
@@ -14,7 +13,9 @@ class Stribog(DataIntegrityChecker):
             data = file.read()
             self._systemHash.update(data)
             hash_value = self._systemHash.hexdigest()
-            self._data[file_path] = hash_value
+            super()._recordEncryptHash(hash_value,file_path)
+
+            #self._data[file_path] = hash_value
             self._systemHash.clear()
             print(f"File '{file_path}' added with hash value: {hash_value}")
             logging.info(f"File '{file_path}' added with hash value: {hash_value}")
@@ -29,7 +30,9 @@ class Stribog(DataIntegrityChecker):
             self._systemHash.update(data)
             hash_value = self._systemHash.hexdigest()
 
-            if hash_value == self._data[file_path]:
+            decrypted_hash = super()._getDecryptHash(file_path)
+
+            if hash_value == decrypted_hash:
                 logging.info(f"Integrity {self.typeHash} of '{file_path}' verified.")
                 print(f"Integrity of '{file_path}' verified.")
                 return True
