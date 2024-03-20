@@ -1,6 +1,6 @@
-
 from backend.SHA import SHA
 from backend.Stribog import Stribog,EncryptMethods
+from backend.SHAKE import SHAKE
 from backend.utils import add_text_to_file
 
 def workHash(hash):
@@ -18,6 +18,6 @@ def generateReport(hash):
     hash.generate_report()
 
 if __name__ == '__main__':
-    checker = Stribog(256,encryptMethod=EncryptMethods.DES)
+    checker = SHAKE(256,encryptMethod=EncryptMethods.DES)
     workHash(checker)
-    #generateReport(checker)
+    generateReport(checker)

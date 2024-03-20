@@ -1,5 +1,5 @@
-from Crypto.Hash import SHA512
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256,SHA512 ,SHAKE128
+
 
 from base64 import b64decode,b64encode
 import os
@@ -97,11 +97,16 @@ class DataIntegrityChecker:
 
 
     def _get_hash(self, data, hash_function):
-        if self.typeHash != Hashs.STRIBOG:
+        if self.typeHash == Hashs.SHA:
             hash_function = hash_function.new(data)
-        else:
+        elif self.typeHash == Hashs.STRIBOG:
             hash_function.clear()
             hash_function.update(data)
+        elif self.typeHash == Hashs.SHAKE128:
+            shake = self._systemHash.new()
+            shake.update(data)
+            shake128_hash = shake.read(self.sizeHash)
+            return shake128_hash.hex()
 
         return hash_function.hexdigest()
 
@@ -126,6 +131,8 @@ class DataIntegrityChecker:
             self._systemHash = _pystribog.StribogHash(self.sizeHash)
         elif self.typeHash == Hashs.SHA:
             self._systemHash = SHA256 if self.sizeHash == 256 else SHA512
+        elif self.typeHash == Hashs.SHAKE128:
+            self._systemHash = SHAKE128
 
     def _set_system_encrypt(self,key):
         if self.typeEncrypt == EncryptMethods.AES:
