@@ -15,6 +15,7 @@ class Stribog(DataIntegrityChecker):
             self._systemHash.update(data)
             hash_value = self._systemHash.hexdigest()
             self._data[file_path] = hash_value
+            self._systemHash.clear()
             print(f"File '{file_path}' added with hash value: {hash_value}")
             logging.info(f"File '{file_path}' added with hash value: {hash_value}")
             return True

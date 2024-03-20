@@ -15,6 +15,7 @@ class SHA(DataIntegrityChecker):
             hash_value = hash_object.hexdigest()
             self._data[file_path] = hash_value
             print(f"File '{file_path}' added with hash value: {hash_value}")
+            logging.info(f"File '{file_path}' added with hash value: {hash_value}")
             return True
 
     def check_integrity(self, file_path):

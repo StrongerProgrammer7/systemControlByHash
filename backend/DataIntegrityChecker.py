@@ -51,6 +51,41 @@ class DataIntegrityChecker:
         self.typeHash = typeHash
         self._set_system_hash()
 
+    def generate_report(self, report_file="data_integrity_report.txt"):
+        with open(report_file, "w") as report:
+            report.write("Data Integrity Report\n\n")
+            for file_path, hash_value in self._data.items():
+                report.write(f"File: {file_path}\n")
+                report.write(f"Hash type: {self.typeHash}\n")
+                report.write(f"Size hash = {512 if len(hash_value) == 128 else 256}\n")
+                report.write(f"Hash Value: {hash_value}\n")
+
+                if os.path.exists(file_path):
+                    with open(file_path, "rb") as file:
+                        data = file.read()
+                        newHash = self._get_hash(data,self._systemHash)
+                        report.write(f"New hash {newHash}\n")
+                        report.write("Status: ")
+                        if newHash == hash_value:
+                            report.write("Integrity verified\n")
+                        else:
+                            report.write("Integrity check failed\n")
+                else:
+                    report.write("File not found\n")
+                report.write("\n")
+        print(f"Report generated: {report_file}")
+
+
+
+    def _get_hash(self, data, hash_function):
+        if self.typeHash != Hash.STRIBOG:
+            hash_function = hash_function.new(data)
+        else:
+            hash_function.clear()
+            hash_function.update(data)
+
+        return hash_function.hexdigest()
+
     def _set_system_hash(self):
         if self.typeHash == Hash.STRIBOG:
             self._systemHash = _pystribog.StribogHash(self.sizeHash)
