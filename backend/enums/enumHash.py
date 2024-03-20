@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Hash(Enum):
+class Hashs(Enum):
     SHA = 'SHA'
     STRIBOG = 'STRIBOG'
 

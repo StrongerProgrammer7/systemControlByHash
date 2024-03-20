@@ -1,21 +1,23 @@
 from Crypto.Hash import SHA512
 from Crypto.Hash import SHA256
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
+
 from base64 import b64decode,b64encode
 import os
 import logging
 
 import _pystribog
 from backend.utils import size512Or256, _validate_type
-from backend.enumHash import Hash
+from backend.enums.enumHash import Hashs
+from backend.enums.enumEncryptMethod import EncryptMethods
+from backend.Encrypt.AES import EncryptAES
+from backend.Encrypt.DES import EncryptDES
 
 class DataIntegrityChecker:
 
-    def __init__(self, sizeHash=512, typeHash=Hash.STRIBOG,keyEncrypt=16):
+    def __init__(self, sizeHash, typeHash, keyEncrypt, encryptMethod):
         _validate_type(sizeHash, int, "sizeHash")
         _validate_type(keyEncrypt, int, "keyEncrypt")
-        _validate_type(typeHash, Hash, "typeHash")
+        _validate_type(typeHash, Hashs, "typeHash")
 
         if not size512Or256(sizeHash):
             raise ValueError("Size hash must be 512 or 256")
@@ -23,8 +25,10 @@ class DataIntegrityChecker:
         self._data = {}
         self.typeHash = typeHash
         self.sizeHash = sizeHash
-        self.keyEncrypt = keyEncrypt
+        self.typeEncrypt = encryptMethod
+
         self._set_system_hash()
+        self._set_system_encrypt(keyEncrypt)
         self._setup_logging()
 
 
@@ -68,8 +72,8 @@ class DataIntegrityChecker:
             report.write("Data Integrity Report\n\n")
             for file_path, hash_info in self._data.items():
                 report.write(f"File: {file_path}\n")
-                report.write(f"Hash type: {self.typeHash}\n")
-                report.write("Type encrypt: AES\n")
+                report.write(f"Hash type: {self.typeHash.value}\n")
+                report.write(f"Type encrypt: {self.typeEncrypt.value}\n")
                 report.write(f"Hash Encrypted: {hash_info['encrypted_hash']}\n")
                 report.write(f"Size hash = {512 if len(hash_info) == 128 else 256}\n")
                 report.write(f"Hash Value: ")
@@ -93,7 +97,7 @@ class DataIntegrityChecker:
 
 
     def _get_hash(self, data, hash_function):
-        if self.typeHash != Hash.STRIBOG:
+        if self.typeHash != Hashs.STRIBOG:
             hash_function = hash_function.new(data)
         else:
             hash_function.clear()
@@ -102,9 +106,7 @@ class DataIntegrityChecker:
         return hash_function.hexdigest()
 
     def _recordEncryptHash(self,hash_value,file_path):
-        key = get_random_bytes(self.keyEncrypt)
-
-        encryptHash, nonce, tag = self._encrypt_hash(hash_value, key)
+        encryptHash, nonce, tag, key = self._encryptMethod.encrypt_hash(hash_value)
 
         self._data[file_path] = {
             'encrypted_hash': encryptHash,
@@ -112,28 +114,25 @@ class DataIntegrityChecker:
             'tag': tag,
             'key': b64encode(key).decode('utf-8')
         }
+
     def _getDecryptHash(self,file_path):
-        return self._decrypt_hash(self._data[file_path]['encrypted_hash'],
+        return self._encryptMethod.decrypt_hash(self._data[file_path]['encrypted_hash'],
                            self._data[file_path]['nonce'],
                            self._data[file_path]['tag'],
                            b64decode(self._data[file_path]['key']))
 
     def _set_system_hash(self):
-        if self.typeHash == Hash.STRIBOG:
+        if self.typeHash == Hashs.STRIBOG:
             self._systemHash = _pystribog.StribogHash(self.sizeHash)
-        elif self.typeHash == Hash.SHA:
+        elif self.typeHash == Hashs.SHA:
             self._systemHash = SHA256 if self.sizeHash == 256 else SHA512
 
-    def _encrypt_hash(self, hash_value, key):
-        cipher = AES.new(key, AES.MODE_GCM)
-        ciphertext, tag = cipher.encrypt_and_digest(hash_value.encode())
-        return b64encode(ciphertext).decode('utf-8'), b64encode(cipher.nonce).decode('utf-8'), b64encode(tag).decode(
-            'utf-8')
+    def _set_system_encrypt(self,key):
+        if self.typeEncrypt == EncryptMethods.AES:
+            self._encryptMethod = EncryptAES(key)
+        elif self.typeEncrypt == EncryptMethods.DES:
+            self._encryptMethod = EncryptDES(8)
 
-    def _decrypt_hash(self, encrypted_hash, nonce, tag, key):
-        cipher = AES.new(key, AES.MODE_GCM, b64decode(nonce))
-        plaintext = cipher.decrypt_and_verify(b64decode(encrypted_hash), b64decode(tag))
-        return plaintext.decode('utf-8')
 
     def _setup_logging(self):
         logging.basicConfig(filename='data_integrity.log', level=logging.INFO,

@@ -1,10 +1,10 @@
-from backend.DataIntegrityChecker import DataIntegrityChecker,Hash
+from backend.DataIntegrityChecker import DataIntegrityChecker,Hashs,EncryptMethods
 import logging
 
 class SHA(DataIntegrityChecker):
 
-    def __init__(self, sizeHash=512):
-        super().__init__(sizeHash, Hash.SHA)
+    def __init__(self, sizeHash=512,keyEncrypt=16,encryptMethod=EncryptMethods.AES):
+        super().__init__(sizeHash, Hashs.SHA,keyEncrypt,encryptMethod)
 
     def hashingFile(self, file_path):
         super().hashingFile(file_path)
