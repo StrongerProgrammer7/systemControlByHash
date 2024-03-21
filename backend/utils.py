@@ -23,3 +23,18 @@ def size512Or256(size):
 def _validate_type(value, expected_type, name):
     if not isinstance(value, expected_type):
         raise ValueError(f"Value {name} must be {expected_type.__name__}")
+
+def retrieve_file_from_database(record,absolute_path):
+    try:
+
+        if record[8]:
+            # Записываем содержимое в новый файл
+            with open('retrieved_file.txt', 'wb') as file:
+                file.write(record[8])
+
+            print("File '{}' has been successfully retrieved from the database.".format("retrieved_file.txt"))
+        else:
+            print("File '{}' not found in the database.".format("retrieved_file.txt"))
+
+    except Exception as e:
+        print("Error retrieving file from the database:", e)
