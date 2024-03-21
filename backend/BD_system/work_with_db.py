@@ -56,12 +56,13 @@ class CRUD:
 
 if __name__ == "__main__":
     db = CRUD()
-
-    # Пример использования операций CRUD
-    db.insert_record('example_path', 'example_hash', encrypted_hash='example_encrypted_hash', type_hash='example_type_hash',extra_info_encryption = "aaa,aasd,assad",body_file="body",type_encrypted="DES",hash_key_encrypted="0xkey")
-    record = db.get_record_by_absolute_path('example_path')
-    print("Retrieved Record:", record)
-    db.update_record_by_absolute_path('example_path', hash='updated_hash')
-    record = db.get_record_by_absolute_path('example_path')
-    print("Updated Record:", record)
-    db.delete_record_by_absolute_path('example_path')
+    with open("../../test_files/ex3.txt", "rb") as file:
+        data = file.read()
+        # Пример использования операций CRUD
+        db.insert_record('example_path', 'example_hash', encrypted_hash='example_encrypted_hash', type_hash='example_type_hash',extra_info_encryption = "aaa,aasd,assad",body_file=data,type_encrypted="DES",hash_key_encrypted="0xkey")
+        record = db.get_record_by_absolute_path('example_path')
+        print("Retrieved Record:", record[0])
+        db.update_record_by_absolute_path('example_path', hash='updated_hash')
+        record = db.get_record_by_absolute_path('example_path')
+        print("Updated Record:", record)
+        db.delete_record_by_absolute_path('example_path')
