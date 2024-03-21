@@ -23,12 +23,12 @@ class MyDatabase:
                 id INTEGER PRIMARY KEY,
                 absolute_path TEXT UNIQUE,
                 hash TEXT,
-                encrypted_hash TEXT NULL,
+                encrypted_hash BLOB NULL,
                 type_hash TEXT,
                 type_encrypted TEXT NULL,
-                extra_info_encryption TEXT NULL,
-                hash_key_encrypted TEXT NULL,
-                body_file BLOB
+                iv BLOB NULL,
+                hash_key_encrypted BLOB NULL,
+                body_file BLOB NULL
             )
         ''')
         MyDatabase.conn.commit()

@@ -4,27 +4,27 @@ from backend.BD_system.db_system import MyDatabase
 
 class CRUD:
 
-    def __init__(self, db_name='mydatabase.db'):
+    def __init__(self):
         self._db = MyDatabase()
         self._db.create_table()
         self.cursor = self._db.getCursor()
 
-    def insert(self, absolute_path, hash_value, type_hash, body_file, encrypted_hash=None, type_encrypted=None,
-               extra_info_encryption=None, hash_key_encrypted=None):
+    def insert(self, absolute_path, type_hash, body_file,hash_value=None, encrypted_hash=None, type_encrypted=None,
+               iv=None, hash_key_encrypted=None):
         existing_record = self.get_data(absolute_path)
         if existing_record:
             print("Record will be update")
             self.update_by_absolute_path(absolute_path, hash=hash_value, encrypted_hash=encrypted_hash,
                                          type_hash=type_hash, type_encrypted=type_encrypted,
-                                         extra_info_encryption=extra_info_encryption,
+                                         iv=iv,
                                          hash_key_encrypted=hash_key_encrypted, body_file=body_file)
         else:
             try:
                 self.cursor.execute('''
-                            INSERT INTO mytable (absolute_path, hash, encrypted_hash, type_hash, type_encrypted, extra_info_encryption, hash_key_encrypted, body_file) 
+                            INSERT INTO mytable (absolute_path, hash, encrypted_hash, type_hash, type_encrypted, iv, hash_key_encrypted, body_file) 
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         ''', (
-                    absolute_path, hash_value, encrypted_hash, type_hash, type_encrypted, extra_info_encryption,
+                    absolute_path, hash_value, encrypted_hash, type_hash, type_encrypted, iv,
                     hash_key_encrypted, body_file))
                 MyDatabase.conn.commit()
             except sqlite3.IntegrityError:
@@ -36,15 +36,15 @@ class CRUD:
                 SELECT * FROM mytable 
             ''')
             record = self.cursor.fetchall()
-            for i in range(len(record)):
-                temp = self._formatData(record[i])
-                record[i] = temp
+            # for i in range(len(record)):
+            #     temp = self._formatData(record[i])
+            #     record[i] = temp
         else:
             self.cursor.execute('''
                             SELECT * FROM mytable WHERE absolute_path = ?
                         ''', (absolute_path,))
             record = self.cursor.fetchone()
-            record = self._formatData(record)
+            #record = self._formatData(record)
 
         return record
 
@@ -72,9 +72,14 @@ class CRUD:
             record[6] = record_extra_info_encryption
             record = tuple(record)
         return record
+# db = CRUD()
+# record = db.get_data()
+# print("Retrieved Record:", record)
 
 # if __name__ == "__main__":
-#     db = CRUD()
+#      db = CRUD()
+#      record = db.get_data()
+#      print("Retrieved Record:", record)
 #     with open("../../test_files/ex3.txt", "rb") as file:
 #         data = file.read()
 #         # Пример использования операций CRUD

@@ -24,9 +24,8 @@ def _validate_type(value, expected_type, name):
     if not isinstance(value, expected_type):
         raise ValueError(f"Value {name} must be {expected_type.__name__}")
 
-def get_tempFileIncludeContentFromDB(record, temp_file_path='test_files/temp.txt'):
+def get_tempFileIncludeContentFromDB(content_from_db, temp_file_path='test_files/temp.txt'):
     try:
-        content_from_db = record[8]
         if content_from_db:
             # Записываем содержимое в новый файл
             with open(temp_file_path, 'wb') as file:

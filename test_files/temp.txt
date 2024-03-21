@@ -2,8 +2,8 @@ stages:          # List of stages for jobs, and their order of execution  - buil
 This is some additional text:
 This is some additional text:
 This is some additional text:
-This is plus additionol text:
-This is erro additionas text:
+This is plug additionol text:
+This is errr additionas text:
 This is some additional text:
 This is some additional text:
 This is some additional text:

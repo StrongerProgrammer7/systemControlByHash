@@ -8,9 +8,8 @@ from backend.utils import _validate_type, size512Or256
 
 
 class WorkHash():
-    def __init__(self, sizeHash, typeHash, keyEncrypt=16, encryptMethod=None):
+    def __init__(self, sizeHash, typeHash, encryptMethod=None):
         _validate_type(sizeHash, int, "sizeHash")
-        _validate_type(keyEncrypt, int, "keyEncrypt")
         _validate_type(typeHash, str, "typeHash")
         if encryptMethod is not None:
             _validate_type(encryptMethod, str, "encryptMethod")
@@ -21,7 +20,7 @@ class WorkHash():
         self._set_type_hash(typeHash)
         self.sizeHash = sizeHash
         self._set_type_encrypt(encryptMethod)
-        self._set_system_hash(keyEncrypt, encryptMethod)
+        self._set_system_hash(encryptMethod)
 
     def hashing_file(self, file_path):
         self.methodHash.hashingFile(file_path)
@@ -37,24 +36,34 @@ class WorkHash():
             report.write("Data Integrity Report\n\n")
             self._generateReportFromDatabase(report)
 
-
     def changeTypeHash(self, typeHash):
         _validate_type(typeHash, str, "typeHash")
         self._set_type_hash(typeHash)
-        self._set_system_hash(self.methodHash.keyEncrypt, self.methodHash.typeEncrypt)
+        self._set_system_hash(self.methodHash.typeEncrypt)
 
     def changeSizeHash(self, sizeHash):
         _validate_type(sizeHash, int, "sizeHash")
+        if sizeHash != 256 or sizeHash != 512:
+            print("Error: only 256 or 512")
+            return False
         self.sizeHash = sizeHash
-        self._set_system_hash(self.methodHash.keyEncrypt, self.methodHash.typeEncrypt)
+        self._set_system_hash(self.methodHash.typeEncrypt)
 
-    def _set_system_hash(self, keyEncrypt, encryptMethod):
+    def get_data_by_file_path(self,file_path):
+        record = self.methodHash.get_data_by_file_path(file_path)
+        data = [record[1],record[2],record[3],record[4],record[5],record[8]]
+        return data
+
+    def set_encrypt_method(self,encryptMethod):
+        self.methodHash.usingEncrypt(encryptMethod)
+
+    def _set_system_hash(self, encryptMethod):
         if self.typeHash == Hashs.STRIBOG:
-            self.methodHash = Stribog(self.sizeHash, keyEncrypt, encryptMethod)
+            self.methodHash = Stribog(self.sizeHash, encryptMethod)
         elif self.typeHash == Hashs.SHA:
-            self.methodHash = SHA(self.sizeHash, keyEncrypt, encryptMethod)
+            self.methodHash = SHA(self.sizeHash, encryptMethod)
         elif self.typeHash == Hashs.SHAKE128:
-            self.methodHash = SHAKE(self.sizeHash, keyEncrypt, encryptMethod)
+            self.methodHash = SHAKE(self.sizeHash, encryptMethod)
 
     def _set_type_hash(self, typeHash: str) -> None:
         if typeHash == Hashs.STRIBOG.value:
@@ -63,6 +72,8 @@ class WorkHash():
             self.typeHash = Hashs.SHA
         elif typeHash == Hashs.SHAKE128.value:
             self.typeHash = Hashs.SHAKE128
+        else:
+            print("type hash not exists!")
 
     def _set_type_encrypt(self, encryptType: str) -> None:
         if encryptType == EncryptMethods.AES.value:
@@ -85,11 +96,14 @@ class WorkHash():
             if os.path.exists(file_path):
                 with open(file_path, "rb") as file:
                     data = file.read()
-                    newHash = self._get_hash_for_report(data, elem[4])
-                    report.write(f"{elem[2]} \n")
-                    report.write(f"New hash {newHash}\n")
+                    # absolute_path, hash_value, encrypted_hash, type_hash, type_encrypted, extra_info_encryption,
+                    #hash_key_encrypted, body_file
+                    hash = self.methodHash.get_hash(data)
+                    prev_hash = elem[2]
+                    report.write(f"{prev_hash} \n")
+                    report.write(f"New hash {hash}\n")
                     report.write("Status: ")
-                    if newHash == elem[2]:
+                    if prev_hash == hash:
                         report.write("Integrity verified\n")
                     else:
                         report.write("Integrity check failed\n")
@@ -98,7 +112,3 @@ class WorkHash():
             report.write("\n")
 
         self.changeTypeHash(tempTypeHash.value)
-
-    def _get_hash_for_report(self, data, typeHash):
-        self.changeTypeHash(typeHash)
-        return self.methodHash.get_hash(data)
