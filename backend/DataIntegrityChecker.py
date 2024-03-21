@@ -1,16 +1,17 @@
-from Crypto.Hash import SHA256,SHA512 ,SHAKE128
-from base64 import b64decode,b64encode
+from Crypto.Hash import SHA256, SHA512, SHAKE128
+from base64 import b64decode, b64encode
 import os
 import logging
 
 import _pystribog
-from backend.utils import size512Or256, _validate_type,get_tempFileIncludeContentFromDB
+from backend.utils import size512Or256, _validate_type, get_tempFileIncludeContentFromDB
 from backend.enums.enumHash import Hashs
 from backend.enums.enumEncryptMethod import EncryptMethods
 from backend.Encrypt.AES import EncryptAES
 from backend.Encrypt.DES import EncryptDES
 from backend.BD_system.work_with_db import CRUD
 from backend.DifferenceFile import SearchDifferenceFile
+
 
 class DataIntegrityChecker:
 
@@ -33,7 +34,7 @@ class DataIntegrityChecker:
         self._searchDiff = SearchDifferenceFile()
         self._setup_logging()
 
-    def usingEncrypt(self,encryptMethod):
+    def usingEncrypt(self, encryptMethod):
         if encryptMethod == None:
             return
         _validate_type(encryptMethod, EncryptMethods, "encryptMethod")
@@ -43,7 +44,7 @@ class DataIntegrityChecker:
 
     def hashingFile(self, file_path):
         if os.path.exists(file_path):
-            print("")#"Overload methods")
+            print("")  # "Overload methods")
         else:
             print(f"File '{file_path}' not found.")
             logging.error(f"File '{file_path}' not found.")
@@ -51,19 +52,19 @@ class DataIntegrityChecker:
 
     def check_integrity(self, file_path):
         if file_path in self._data:
-            print("")#"Overload methods")
+            print("")  # "Overload methods")
         else:
             print(f"File '{file_path}' not found in integrity records.")
             logging.error(f"File '{file_path}' not found in integrity records.")
 
-    def getDataFile(self,file_path):
+    def getDataFile(self, file_path):
         if self.typeEncrypt is None:
             return self._data[file_path]
         else:
             return {
                 'encrypted_hash': self._data[file_path]['encrypted_hash'],
                 'nonce': self._data[file_path]['nonce'],
-                'tag':self._data[file_path]['tag'],
+                'tag': self._data[file_path]['tag'],
             }
 
     def changeHashSize(self, size):
@@ -76,57 +77,36 @@ class DataIntegrityChecker:
     def changeTypeHash(self, typeHash):
         _validate_type(typeHash, str, "typeHash")
 
-        self.typeHash = typeHash
+        if Hashs.SHA.value == typeHash:
+            self.typeHash = typeHash
+        elif typeHash == Hashs.STRIBOG.value:
+            self.typeHash = typeHash
+        elif typeHash == Hashs.SHAKE128.value:
+            self.typeHash = typeHash
+
         self._set_system_hash()
 
     def getDifferenceFile(self, file_path):
         record = self._db.get_data(file_path)
         path = get_tempFileIncludeContentFromDB(record)
-        differences = self._searchDiff.getDifferenceFile(file_path,path)
+        differences = self._searchDiff.getDifferenceFile(file_path, path)
         return differences
+
+    def deleteHashByPath(self,file_path):
+        self._db.delete_by_absolute_path(file_path)
 
     def generate_report(self, report_file="data_integrity_report.txt"):
         with open(report_file, "w") as report:
             report.write("Data Integrity Report\n\n")
-            if len(self._data) != 0:
-                self._generateFromData(report)
-            else:
-                self._generateReportFromDatabase(report)
-# private methods
+            self._generateReportFromDatabase(report)
 
-    def _generateFromData(self,report):
-        for file_path, hash_info in self._data.items():
-            report.write(f"File: {file_path}\n")
-            report.write(f"Hash type: {self.typeHash.value}\n")
-            if self.typeEncrypt is not None:
-                report.write(f"Type encrypt: {self.typeEncrypt.value}\n")
-                report.write(f"Hash Encrypted: {hash_info['encrypted_hash']}\n")
-            report.write(f"Size hash = {512 if len(hash_info) == 128 else 256}\n")
-            report.write(f"Hash Value: ")
-
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as file:
-                    data = file.read()
-                    newHash = self._get_hash_for_report(data, self._systemHash)
-                    hash_value = self._getHash(self._getDecryptHash, file_path)
-                    report.write(f"{hash_value} \n")
-                    report.write(f"New hash {newHash}\n")
-                    report.write("Status: ")
-                    if newHash == hash_value:
-                        report.write("Integrity verified\n")
-                    else:
-                        report.write("Integrity check failed\n")
-            else:
-                report.write("File not found\n")
-            report.write("\n")
-
-    def _generateReportFromDatabase(self,report):
+    # private methods
+    def _generateReportFromDatabase(self, report):
         record = self._db.get_data()
+        tempTypeHash = self.typeHash
         for elem in record:
             report.write(f"File: {elem[1]}\n")
             report.write(f"Hash type: {elem[4]}\n")
-            #absolute_path 1, hash 2, encrypted_hash 3, type_hash 4,
-            # type_encrypted 5, extra_info_encryption 6, hash_key_encrypted 7, body_file
             if self.typeEncrypt is not None:
                 report.write(f"Type encrypt: {elem[5]}\n")
                 report.write(f"Hash Encrypted: {elem[3]}\n")
@@ -136,7 +116,7 @@ class DataIntegrityChecker:
             if os.path.exists(file_path):
                 with open(file_path, "rb") as file:
                     data = file.read()
-                    newHash = self._get_hash_for_report(data, self._systemHash)
+                    newHash = self._get_hash_for_report(data, self._systemHash, elem[4])
                     report.write(f"{elem[2]} \n")
                     report.write(f"New hash {newHash}\n")
                     report.write("Status: ")
@@ -148,13 +128,18 @@ class DataIntegrityChecker:
                 report.write("File not found\n")
             report.write("\n")
 
-    def _get_hash_for_report(self, data, hash_function):
-        if self.typeHash == Hashs.SHA:
+        self.changeTypeHash(tempTypeHash.value)
+
+    def _get_hash_for_report(self, data, hash_function, typeHash: str):
+        self.changeTypeHash(typeHash)
+
+        if self.typeHash == Hashs.SHA.value:
             hash_function = hash_function.new(data)
-        elif self.typeHash == Hashs.STRIBOG:
+        elif self.typeHash == Hashs.STRIBOG.value:
+            print("STRIBOG")
             hash_function.clear()
             hash_function.update(data)
-        elif self.typeHash == Hashs.SHAKE128:
+        elif self.typeHash == Hashs.SHAKE128.value:
             shake = self._systemHash.new()
             shake.update(data)
             shake128_hash = shake.read(self.sizeHash)
@@ -162,9 +147,7 @@ class DataIntegrityChecker:
 
         return hash_function.hexdigest()
 
-
-
-    def _recordEncryptHash(self,hash_value,file_path):
+    def _recordEncryptHash(self, hash_value, file_path):
         encryptHash, nonce, tag, key = self._encryptMethod.encrypt_hash(hash_value)
 
         self._data[file_path] = {
@@ -174,14 +157,13 @@ class DataIntegrityChecker:
             'key': b64encode(key).decode('utf-8')
         }
 
-
-    def _getDecryptHash(self,file_path):
+    def _getDecryptHash(self, file_path):
         return self._encryptMethod.decrypt_hash(self._data[file_path]['encrypted_hash'],
-                           self._data[file_path]['nonce'],
-                           self._data[file_path]['tag'],
-                           b64decode(self._data[file_path]['key']))
+                                                self._data[file_path]['nonce'],
+                                                self._data[file_path]['tag'],
+                                                b64decode(self._data[file_path]['key']))
 
-    def _pushHashOrEncryptToData(self,callback,hash_value,file_path,content):
+    def _pushHashOrEncryptToData(self, callback, hash_value, file_path, content):
         if self.typeEncrypt is not None:
             callback(hash_value, file_path)
         else:
@@ -191,12 +173,13 @@ class DataIntegrityChecker:
                         hash_value=hash_value,
                         type_hash=self.typeHash.value,
                         body_file=content,
-                        encrypted_hash=self._data[file_path]['encrypted_hash'] if self.typeEncrypt is not None else None,
+                        encrypted_hash=self._data[file_path][
+                            'encrypted_hash'] if self.typeEncrypt is not None else None,
                         type_encrypted=self.typeEncrypt.value if self.typeEncrypt is not None else None,
                         extra_info_encryption=f"{self._data[file_path]['nonce']} , {self._data[file_path]['tag']}" if self.typeEncrypt is not None else None,
                         hash_key_encrypted=self._data[file_path]['key'] if self.typeEncrypt is not None else None)
 
-    def _getHash(self,callback,file_path):
+    def _getHash(self, callback, file_path):
         if self.typeEncrypt is not None:
             return callback(file_path)
         else:
@@ -210,7 +193,7 @@ class DataIntegrityChecker:
         elif self.typeHash == Hashs.SHAKE128:
             self._systemHash = SHAKE128
 
-    def _set_system_encrypt(self,key):
+    def _set_system_encrypt(self, key):
         if self.typeEncrypt == EncryptMethods.AES:
             self._encryptMethod = EncryptAES(key)
         elif self.typeEncrypt == EncryptMethods.DES:
