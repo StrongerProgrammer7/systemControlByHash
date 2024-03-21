@@ -8,7 +8,7 @@ class CRUD:
 
 
 
-    def insert_record(self, absolute_path, hash_value, encrypted_hash=None, type_hash=None, type_encrypted=None, extra_info_encryption=None, hash_key_encrypted=None, body_file=None):
+    def insert_record(self, absolute_path, hash_value, type_hash, body_file,encrypted_hash=None, type_encrypted=None, extra_info_encryption=None, hash_key_encrypted=None):
         try:
             self.cursor.execute('''
                 INSERT INTO mytable (absolute_path, hash, encrypted_hash, type_hash, type_encrypted, extra_info_encryption, hash_key_encrypted, body_file) 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     db = CRUD()
 
     # Пример использования операций CRUD
-    db.insert_record('example_path', 'example_hash', encrypted_hash='example_encrypted_hash', type_hash='example_type_hash',extra_info_encryption = "aaa,aasd,assad")
+    db.insert_record('example_path', 'example_hash', encrypted_hash='example_encrypted_hash', type_hash='example_type_hash',extra_info_encryption = "aaa,aasd,assad",body_file="body",type_encrypted="DES",hash_key_encrypted="0xkey")
     record = db.get_record_by_absolute_path('example_path')
     print("Retrieved Record:", record)
     db.update_record_by_absolute_path('example_path', hash='updated_hash')
