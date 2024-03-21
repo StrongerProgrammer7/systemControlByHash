@@ -24,8 +24,8 @@ class MyDatabase:
         MyDatabase.conn.commit()
 
 
-    # def __del__(self):
-    #     self.conn.close()
+    def __del__(self):
+        MyDatabase.conn.close()
 
 #
 # if __name__ == "__main__":

@@ -2,9 +2,9 @@ import sqlite3
 import db_system
 class CRUD:
     def __init__(self, db_name='mydatabase.db'):
-        db = db_system.MyDatabase()
-        db.create_table()
-        self.cursor = db.cursor
+        self._db = db_system.MyDatabase()
+        self._db.create_table()
+        self.cursor = self._db.cursor
 
 
 
