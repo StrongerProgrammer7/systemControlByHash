@@ -9,7 +9,7 @@ def hash_file(file_path, hash_algorithm='sha256', chunk_size=65536):
     # Choose hash algorithm
     hasher = hashlib.new(hash_algorithm)
 
-    # Open the file in binary mode
+    # Open the file in binary modeфывыф
     with open(file_path, 'rb') as file:
         # Read the file chunk by chunk
         while chunk := file.read(chunk_size):
