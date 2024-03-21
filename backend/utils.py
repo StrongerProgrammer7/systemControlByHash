@@ -24,17 +24,18 @@ def _validate_type(value, expected_type, name):
     if not isinstance(value, expected_type):
         raise ValueError(f"Value {name} must be {expected_type.__name__}")
 
-def retrieve_file_from_database(record,absolute_path):
+def get_tempFileIncludeContentFromDB(record, temp_file_path='test_files/temp.txt'):
     try:
-
-        if record[8]:
+        content_from_db = record[8]
+        if content_from_db:
             # Записываем содержимое в новый файл
-            with open('retrieved_file.txt', 'wb') as file:
-                file.write(record[8])
+            with open(temp_file_path, 'wb') as file:
+                file.write(content_from_db)
 
-            print("File '{}' has been successfully retrieved from the database.".format("retrieved_file.txt"))
+            print(f"File '{temp_file_path}' has been successfully retrieved from the database.".format("temp.txt"))
         else:
-            print("File '{}' not found in the database.".format("retrieved_file.txt"))
-
+            print("File '{}' not found in the database.".format("temp.txt"))
+        return temp_file_path
     except Exception as e:
         print("Error retrieving file from the database:", e)
+        return None

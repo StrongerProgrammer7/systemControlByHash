@@ -13,7 +13,7 @@ class Stribog(DataIntegrityChecker):
             self._systemHash.update(data)
             hash_value = self._systemHash.hexdigest()
 
-            super()._pushHashOrEncryptToData(super()._recordEncryptHash,hash_value, file_path)
+            super()._pushHashOrEncryptToData(super()._recordEncryptHash,hash_value, file_path,data)
 
             self._systemHash.clear()
             print(f"File '{file_path}' added with hash value: {hash_value}")

@@ -13,7 +13,7 @@ class SHA(DataIntegrityChecker):
             hash_object = self._systemHash.new(data)
             hash_value = hash_object.hexdigest()
 
-            super()._pushHashOrEncryptToData(super()._recordEncryptHash, hash_value, file_path)
+            super()._pushHashOrEncryptToData(super()._recordEncryptHash, hash_value, file_path,data)
 
             print(f"File '{file_path}' added with hash value: {hash_value}")
             logging.info(f"File '{file_path}' added with hash value: {hash_value}")

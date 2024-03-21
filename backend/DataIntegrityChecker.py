@@ -1,16 +1,16 @@
 from Crypto.Hash import SHA256,SHA512 ,SHAKE128
-
-
 from base64 import b64decode,b64encode
 import os
 import logging
 
 import _pystribog
-from backend.utils import size512Or256, _validate_type
+from backend.utils import size512Or256, _validate_type,get_tempFileIncludeContentFromDB
 from backend.enums.enumHash import Hashs
 from backend.enums.enumEncryptMethod import EncryptMethods
 from backend.Encrypt.AES import EncryptAES
 from backend.Encrypt.DES import EncryptDES
+from backend.BD_system.work_with_db import CRUD
+from backend.DifferenceFile import SearchDifferenceFile
 
 class DataIntegrityChecker:
 
@@ -29,6 +29,8 @@ class DataIntegrityChecker:
 
         self._set_system_hash()
         self.usingEncrypt(encryptMethod)
+        self._db = CRUD()
+        self._searchDiff = SearchDifferenceFile()
         self._setup_logging()
 
     def usingEncrypt(self,encryptMethod):
@@ -78,11 +80,9 @@ class DataIntegrityChecker:
         self._set_system_hash()
 
     def getDifferenceFile(self, file_path):
-        original_lines = self._read_file_lines("test_files/ex3.txt")
-        current_lines = self._read_file_lines(file_path)
-        differences = self._compare_lines(original_lines, current_lines)
-        for diff in differences:
-            print(diff)
+        record = self._db.get_data(file_path)
+        path = get_tempFileIncludeContentFromDB(record)
+        differences = self._searchDiff.getDifferenceFile(file_path,path)
         return differences
 
     def generate_report(self, report_file="data_integrity_report.txt"):
@@ -134,7 +134,6 @@ class DataIntegrityChecker:
     def _recordEncryptHash(self,hash_value,file_path):
         encryptHash, nonce, tag, key = self._encryptMethod.encrypt_hash(hash_value)
 
-        print(encryptHash)
         self._data[file_path] = {
             'encrypted_hash': encryptHash,
             'nonce': nonce,
@@ -142,60 +141,33 @@ class DataIntegrityChecker:
             'key': b64encode(key).decode('utf-8')
         }
 
+
     def _getDecryptHash(self,file_path):
         return self._encryptMethod.decrypt_hash(self._data[file_path]['encrypted_hash'],
                            self._data[file_path]['nonce'],
                            self._data[file_path]['tag'],
                            b64decode(self._data[file_path]['key']))
 
-    def _pushHashOrEncryptToData(self,callback,hash_value,file_path):
+    def _pushHashOrEncryptToData(self,callback,hash_value,file_path,content):
         if self.typeEncrypt is not None:
             callback(hash_value, file_path)
         else:
             self._data[file_path] = hash_value
+
+        self._db.insert(absolute_path=file_path,
+                        hash_value=hash_value,
+                        type_hash=self.typeHash.value,
+                        body_file=content,
+                        encrypted_hash=self._data[file_path]['encrypted_hash'] if self.typeEncrypt is not None else None,
+                        type_encrypted=self.typeEncrypt.value if self.typeEncrypt is not None else None,
+                        extra_info_encryption=f"{self._data[file_path]['nonce']} , {self._data[file_path]['tag']}" if self.typeEncrypt is not None else None,
+                        hash_key_encrypted=self._data[file_path]['key'] if self.typeEncrypt is not None else None)
 
     def _getHash(self,callback,file_path):
         if self.typeEncrypt is not None:
             return callback(file_path)
         else:
             return self._data[file_path]
-
-    # for search diff in file======================
-    def _read_file_lines(self,file_path):
-        with open(file_path, "r") as file:
-            return file.readlines()
-
-    def _compare_lines(self,original_lines, current_lines):
-        differences = []
-        for i, (original_line, current_line) in enumerate(zip(original_lines, current_lines), start=1):
-            differences.extend(self._compare_words_in_lines(original_line, current_line, i))
-        return differences
-
-    def _compare_words_in_lines(self,original_line, current_line, line_number):
-        differences = []
-        original_words = original_line.split()
-        current_words = current_line.split()
-        column_line = 0
-        for j, (original_word, current_word) in enumerate(zip(original_words, current_words), start=1):
-            if original_word != current_word:
-                message,column_line = self._create_difference_message(original_word, current_word, line_number, j, column_line)
-                differences.append(message)
-            else:
-                column_line += len(current_word) + 1
-        return differences
-
-    def _create_difference_message(self,original_word, current_word, line_number, word_number, column_line):
-        if len(original_word) > len(current_word):
-            return f"Difference found at Line {line_number}, column {column_line}, Word {word_number}: 'len1{len(original_word)}' > 'len2{len(current_word)}' word: '{original_word}' vs '{current_word}'", column_line + len(current_word) + 1
-        elif len(original_word) < len(current_word):
-            return f"Difference found at Line {line_number}, column {column_line}, Word {word_number}: 'len1{len(original_word)}' < 'len2{len(current_word)}' word: '{original_word}' vs '{current_word}'",column_line + len(current_word) + 1
-        else:
-            for k, (original_char, current_char) in enumerate(zip(original_word, current_word), start=1):
-                column_line += 1
-                if original_char != current_char:
-                    return f"Difference found at Line {line_number}, column {column_line}, Word {word_number}, num symbol {k} : '{original_char}' vs '{current_char}' word: '{original_word}' vs '{current_word}'", column_line + min(len(original_word), len(current_word)) - k + word_number - 1
-            return ""  # Возвращаем пустую строку, если слова одинаковы
-    # end search diff str
 
     def _set_system_hash(self):
         if self.typeHash == Hashs.STRIBOG:
