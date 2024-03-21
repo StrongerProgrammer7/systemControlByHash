@@ -13,11 +13,11 @@ class CRUD:
                extra_info_encryption=None, hash_key_encrypted=None):
         existing_record = self.get_data(absolute_path)
         if existing_record:
+            print("Record will be update")
             self.update_by_absolute_path(absolute_path, hash=hash_value, encrypted_hash=encrypted_hash,
                                          type_hash=type_hash, type_encrypted=type_encrypted,
                                          extra_info_encryption=extra_info_encryption,
                                          hash_key_encrypted=hash_key_encrypted, body_file=body_file)
-            return False  # Запись уже существовала и была обновлена
         else:
             try:
                 self.cursor.execute('''
@@ -27,10 +27,8 @@ class CRUD:
                     absolute_path, hash_value, encrypted_hash, type_hash, type_encrypted, extra_info_encryption,
                     hash_key_encrypted, body_file))
                 MyDatabase.conn.commit()
-                return True
             except sqlite3.IntegrityError:
                 print("Record with absolute path '{}' already exists.".format(absolute_path))
-                return False
 
     def get_data(self, absolute_path=None):
         if absolute_path is None:

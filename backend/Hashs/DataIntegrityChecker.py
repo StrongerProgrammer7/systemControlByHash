@@ -2,8 +2,10 @@ from Crypto.Hash import SHA256, SHA512, SHAKE128
 from base64 import b64decode, b64encode
 import os
 import logging
+from overrides import overrides
 
 import _pystribog
+
 from backend.utils import size512Or256, _validate_type, get_tempFileIncludeContentFromDB
 from backend.enums.enumHash import Hashs
 from backend.enums.enumEncryptMethod import EncryptMethods
@@ -27,6 +29,7 @@ class DataIntegrityChecker:
         self.typeHash = typeHash
         self.sizeHash = sizeHash
         self.typeEncrypt = None
+        self.keyEncrypt = keyEncrypt
 
         self._set_system_hash()
         self.usingEncrypt(encryptMethod)
@@ -44,7 +47,7 @@ class DataIntegrityChecker:
 
     def hashingFile(self, file_path):
         if os.path.exists(file_path):
-            print("")  # "Overload methods")
+            pass # "Overload methods")
         else:
             print(f"File '{file_path}' not found.")
             logging.error(f"File '{file_path}' not found.")
@@ -52,10 +55,13 @@ class DataIntegrityChecker:
 
     def check_integrity(self, file_path):
         if file_path in self._data:
-            print("")  # "Overload methods")
+           pass # "Overload methods")
         else:
             print(f"File '{file_path}' not found in integrity records.")
             logging.error(f"File '{file_path}' not found in integrity records.")
+
+    def get_hash(self,data):
+        pass #overload
 
     def getDataFile(self, file_path):
         if self.typeEncrypt is None:
@@ -78,11 +84,11 @@ class DataIntegrityChecker:
         _validate_type(typeHash, str, "typeHash")
 
         if Hashs.SHA.value == typeHash:
-            self.typeHash = typeHash
+            self.typeHash = Hashs.SHA
         elif typeHash == Hashs.STRIBOG.value:
-            self.typeHash = typeHash
+            self.typeHash = Hashs.STRIBOG
         elif typeHash == Hashs.SHAKE128.value:
-            self.typeHash = typeHash
+            self.typeHash = Hashs.SHAKE128
 
         self._set_system_hash()
 
@@ -95,57 +101,13 @@ class DataIntegrityChecker:
     def deleteHashByPath(self,file_path):
         self._db.delete_by_absolute_path(file_path)
 
-    def generate_report(self, report_file="data_integrity_report.txt"):
-        with open(report_file, "w") as report:
-            report.write("Data Integrity Report\n\n")
-            self._generateReportFromDatabase(report)
+    def get_data_all(self):
+        return self._db.get_data()
+
+    def get_data_by_file_path(self,file_path):
+        return self._db.get_data(file_path)
 
     # private methods
-    def _generateReportFromDatabase(self, report):
-        record = self._db.get_data()
-        tempTypeHash = self.typeHash
-        for elem in record:
-            report.write(f"File: {elem[1]}\n")
-            report.write(f"Hash type: {elem[4]}\n")
-            if self.typeEncrypt is not None:
-                report.write(f"Type encrypt: {elem[5]}\n")
-                report.write(f"Hash Encrypted: {elem[3]}\n")
-            report.write(f"Size hash = {512 if len(elem[2]) == 128 else 256}\n")
-            report.write(f"Hash Value: ")
-            file_path = elem[1]
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as file:
-                    data = file.read()
-                    newHash = self._get_hash_for_report(data, self._systemHash, elem[4])
-                    report.write(f"{elem[2]} \n")
-                    report.write(f"New hash {newHash}\n")
-                    report.write("Status: ")
-                    if newHash == elem[2]:
-                        report.write("Integrity verified\n")
-                    else:
-                        report.write("Integrity check failed\n")
-            else:
-                report.write("File not found\n")
-            report.write("\n")
-
-        self.changeTypeHash(tempTypeHash.value)
-
-    def _get_hash_for_report(self, data, hash_function, typeHash: str):
-        self.changeTypeHash(typeHash)
-
-        if self.typeHash == Hashs.SHA.value:
-            hash_function = hash_function.new(data)
-        elif self.typeHash == Hashs.STRIBOG.value:
-            print("STRIBOG")
-            hash_function.clear()
-            hash_function.update(data)
-        elif self.typeHash == Hashs.SHAKE128.value:
-            shake = self._systemHash.new()
-            shake.update(data)
-            shake128_hash = shake.read(self.sizeHash)
-            return shake128_hash.hex()
-
-        return hash_function.hexdigest()
 
     def _recordEncryptHash(self, hash_value, file_path):
         encryptHash, nonce, tag, key = self._encryptMethod.encrypt_hash(hash_value)
@@ -197,7 +159,7 @@ class DataIntegrityChecker:
         if self.typeEncrypt == EncryptMethods.AES:
             self._encryptMethod = EncryptAES(key)
         elif self.typeEncrypt == EncryptMethods.DES:
-            self._encryptMethod = EncryptDES(8)
+            self._encryptMethod = EncryptDES(key)
 
     def _setup_logging(self):
         logging.basicConfig(filename='data_integrity.log', level=logging.INFO,
