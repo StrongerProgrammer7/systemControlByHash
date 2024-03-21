@@ -25,12 +25,19 @@ class DataIntegrityChecker:
         self._data = {}
         self.typeHash = typeHash
         self.sizeHash = sizeHash
-        self.typeEncrypt = encryptMethod if encryptMethod is not None else None
+        self.typeEncrypt = None
 
         self._set_system_hash()
-        self._set_system_encrypt(keyEncrypt) if encryptMethod is not None else None
+        self.usingEncrypt(encryptMethod)
         self._setup_logging()
 
+    def usingEncrypt(self,encryptMethod):
+        if encryptMethod == None:
+            return
+        _validate_type(encryptMethod, EncryptMethods, "encryptMethod")
+        keyEncrypt = 8 if encryptMethod.value == EncryptMethods.DES else 16
+        self.typeEncrypt = encryptMethod
+        self._set_system_encrypt(keyEncrypt)
 
     def hashingFile(self, file_path):
         if os.path.exists(file_path):
@@ -47,15 +54,15 @@ class DataIntegrityChecker:
             print(f"File '{file_path}' not found in integrity records.")
             logging.error(f"File '{file_path}' not found in integrity records.")
 
-    def getHash(self,file_path):
-        return self._data[file_path] if self.typeEncrypt is not None else None
-
-    def getEncryptDataFile(self, file_path):
-        return {
-            self._data[file_path]['encrypted_hash'],
-            self._data[file_path]['nonce'],
-            self._data[file_path]['tag'],
-        }
+    def getDataFile(self,file_path):
+        if self.typeEncrypt is None:
+            return self._data[file_path]
+        else:
+            return {
+                'encrypted_hash': self._data[file_path]['encrypted_hash'],
+                'nonce': self._data[file_path]['nonce'],
+                'tag':self._data[file_path]['tag'],
+            }
 
     def changeHashSize(self, size):
         if size != _pystribog.Hash256 and size != _pystribog.Hash512:
@@ -127,6 +134,7 @@ class DataIntegrityChecker:
     def _recordEncryptHash(self,hash_value,file_path):
         encryptHash, nonce, tag, key = self._encryptMethod.encrypt_hash(hash_value)
 
+        print(encryptHash)
         self._data[file_path] = {
             'encrypted_hash': encryptHash,
             'nonce': nonce,
