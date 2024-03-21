@@ -23,6 +23,8 @@ class DataIntegrityChecker:
         self._data = {} # TODO Save too,
         self.typeHash = typeHash
         self.sizeHash = sizeHash
+        self.typeEncrypt = None
+        self._encryptMethod = None
 
         self._set_system_encrypt(encryptMethod)
         self._db = CRUD()
@@ -50,9 +52,11 @@ class DataIntegrityChecker:
 
     def usingEncrypt(self, encryptMethod):
         if encryptMethod is None:
-            return
-        _validate_type(encryptMethod, str, "encryptMethod")
-        self._set_system_encrypt(encryptMethod)
+            self._encryptMethod = None
+            self.typeEncrypt = None
+        else:
+            _validate_type(encryptMethod, str, "encryptMethod")
+            self._set_system_encrypt(encryptMethod)
 
     def deleteHashByPath(self, file_path):
         self._db.delete_by_absolute_path(file_path)
@@ -85,8 +89,8 @@ class DataIntegrityChecker:
 
     def _get_line_difference_file(self, file_path):
         record = self._db.get_data(file_path)
-        if self.typeEncrypt is not None:
-            content = self._encryptMethod.decrypt_hash(record[3], record[6], None, record[7])
+        if record[8] is None:
+            content = self._encryptMethod.decrypt_hash(record[3], record[6], record[7])
         else:
             content = record[8]
 
@@ -103,6 +107,7 @@ class DataIntegrityChecker:
             self._encryptMethod = EncryptDES(8)
         else:
             self.typeEncrypt = None
+            self._encryptMethod = None
 
     def _setup_logging(self):
         logging.basicConfig(filename='data_integrity.log', level=logging.INFO,

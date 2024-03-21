@@ -1,6 +1,6 @@
 import _pystribog
 
-from backend.Hashs.DataIntegrityChecker import DataIntegrityChecker, Hashs,overrides,b64decode
+from backend.Hashs.DataIntegrityChecker import DataIntegrityChecker, Hashs,overrides
 import logging
 
 
