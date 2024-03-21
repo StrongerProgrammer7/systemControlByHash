@@ -1,23 +1,28 @@
 from Crypto.Cipher import AES
-from base64 import b64decode, b64encode
+
+from overrides import overrides
+
 from backend.Encrypt.Encrypt import Encrypt
 from Crypto.Random import get_random_bytes
+
 
 class EncryptAES(Encrypt):
     def __init__(self, keyEncrypt=16):
         super().__init__(keyEncrypt)
 
-    def encrypt_hash(self, hash_value):
+    @overrides
+    def encrypt_hash(self, data):
         key = get_random_bytes(self.key)
+        iv = get_random_bytes(self.key)
 
-        cipher = AES.new(key, AES.MODE_GCM)
-        ciphertext, tag = cipher.encrypt_and_digest(hash_value.encode())
-        return b64encode(ciphertext).decode('utf-8'), b64encode(cipher.nonce).decode('utf-8'), b64encode(tag).decode(
-            'utf-8'), key
+        cipher = AES.new(key, AES.MODE_CFB, iv=iv)
+        ciphertext = cipher.encrypt(data)
+        return ciphertext, iv, key
 
-    def decrypt_hash(self, encrypted_hash, nonce, tag,key):
-        cipher = AES.new(key, AES.MODE_GCM, b64decode(nonce))
-        plaintext = cipher.decrypt_and_verify(b64decode(encrypted_hash), b64decode(tag))
+    @overrides()
+    def decrypt_hash(self, encrypted_data, iv, key):
+        cipher = AES.new(key, AES.MODE_CFB, iv=iv)
+        plaintext = cipher.decrypt(encrypted_data)
         return plaintext.decode('utf-8')
 
 

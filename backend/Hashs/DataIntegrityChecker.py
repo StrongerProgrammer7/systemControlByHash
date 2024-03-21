@@ -1,9 +1,6 @@
-from base64 import b64decode, b64encode
 import os
 import logging
 from overrides import overrides
-
-import _pystribog
 
 from backend.utils import size512Or256, _validate_type, get_tempFileIncludeContentFromDB
 from backend.enums.enumHash import Hashs
@@ -23,7 +20,7 @@ class DataIntegrityChecker:
         if not size512Or256(sizeHash):
             raise ValueError("Size hash must be 512 or 256")
 
-        self._data = {}
+        self._data = {} # TODO Save too,
         self.typeHash = typeHash
         self.sizeHash = sizeHash
 
@@ -71,20 +68,10 @@ class DataIntegrityChecker:
         record = self.get_data_by_file_path(file_path)
         return record[2] if record is not None else ''
 
-    def _recordEncryptHash(self, hash_value, file_path):
-        encryptHash, nonce, tag, key = self._encryptMethod.encrypt_hash(hash_value)
-
-        # self._data[file_path] = {
-        #     'encrypted_hash': encryptHash,
-        #     'nonce': nonce,
-        #     'tag': tag,
-        #     'key': b64encode(key).decode('utf-8')
-        # }
-
     def _record_to_db(self, hash_value, file_path, content):
         cipher = iv = tag = key = None
         if self.typeEncrypt is not None:
-            cipher, iv, tag, key = self._encryptMethod.encrypt_hash(content)
+            cipher, iv, key = self._encryptMethod.encrypt_hash(content)
         self._data[file_path] = hash_value
 
         self._db.insert(absolute_path=file_path,
@@ -94,7 +81,6 @@ class DataIntegrityChecker:
                         encrypted_hash=cipher if self.typeEncrypt is not None else None,
                         type_encrypted=self.typeEncrypt.value if self.typeEncrypt is not None else None,
                         iv=iv if self.typeEncrypt is not None else None,
-                        # f"{self._data[file_path]['nonce']} , {self._data[file_path]['tag']}" if self.typeEncrypt is not None else None,
                         hash_key_encrypted=key if self.typeEncrypt is not None else None)
 
     def _get_line_difference_file(self, file_path):
