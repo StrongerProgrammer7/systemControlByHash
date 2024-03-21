@@ -7,6 +7,7 @@ class MyDatabase:
 
     def __init__(self, db_name='mydatabase.db'):
         if MyDatabase.conn is None:
+            print("Connect db...")
             MyDatabase.conn = sqlite3.connect(db_name)
             MyDatabase.cursor = MyDatabase.conn.cursor()
 

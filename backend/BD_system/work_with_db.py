@@ -32,18 +32,21 @@ class CRUD:
                 print("Record with absolute path '{}' already exists.".format(absolute_path))
                 return False
 
-    def get_data(self, absolute_path):
-        self.cursor.execute('''
-            SELECT * FROM mytable WHERE absolute_path = ?
-        ''', (absolute_path,))
-        record = self.cursor.fetchone()
-
-        # Разбиваем поле extra_info_encryption на части, если оно есть
-        if record and record[6]:
-            record_extra_info_encryption = record[6].split(',')
-            record = list(record)
-            record[6] = record_extra_info_encryption
-            record = tuple(record)
+    def get_data(self, absolute_path=None):
+        if absolute_path is None:
+            self.cursor.execute('''
+                SELECT * FROM mytable 
+            ''')
+            record = self.cursor.fetchall()
+            for i in range(len(record)):
+                temp = self._formatData(record[i])
+                record[i] = temp
+        else:
+            self.cursor.execute('''
+                            SELECT * FROM mytable WHERE absolute_path = ?
+                        ''', (absolute_path,))
+            record = self.cursor.fetchone()
+            record = self._formatData(record)
 
         return record
 
@@ -63,6 +66,14 @@ class CRUD:
             DELETE FROM mytable WHERE absolute_path = ?
         ''', (absolute_path,))
         MyDatabase.conn.commit()
+
+    def _formatData(self,record):
+        if record and record[6]:
+            record_extra_info_encryption = record[6].split(',')
+            record = list(record)
+            record[6] = record_extra_info_encryption
+            record = tuple(record)
+        return record
 
 # if __name__ == "__main__":
 #     db = CRUD()

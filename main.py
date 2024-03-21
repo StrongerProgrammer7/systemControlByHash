@@ -21,10 +21,12 @@ def generateReport(hash):
 
 if __name__ == '__main__':
     checker = Stribog(256,encryptMethod=None)
-    workHash(checker)
 
-    checker = SHA(256, encryptMethod=None)
-    workHash(checker)
+    checker.generate_report()
+    #workHash(checker)
+
+    #checker = SHA(256, encryptMethod=None)
+    #workHash(checker)
     # checker.usingEncrypt(encryptMethod=EncryptMethods.AES)
     # workHash(checker)
     #generateReport(checker)

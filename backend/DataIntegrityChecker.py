@@ -88,33 +88,65 @@ class DataIntegrityChecker:
     def generate_report(self, report_file="data_integrity_report.txt"):
         with open(report_file, "w") as report:
             report.write("Data Integrity Report\n\n")
-            for file_path, hash_info in self._data.items():
-                report.write(f"File: {file_path}\n")
-                report.write(f"Hash type: {self.typeHash.value}\n")
-                if self.typeEncrypt is not None:
-                    report.write(f"Type encrypt: {self.typeEncrypt.value}\n")
-                    report.write(f"Hash Encrypted: {hash_info['encrypted_hash']}\n")
-                report.write(f"Size hash = {512 if len(hash_info) == 128 else 256}\n")
-                report.write(f"Hash Value: ")
-
-                if os.path.exists(file_path):
-                    with open(file_path, "rb") as file:
-                        data = file.read()
-                        newHash = self._get_hash_for_report(data, self._systemHash)
-                        hash_value = self._getHash(self._getDecryptHash,file_path)
-                        report.write(f"{hash_value} \n")
-                        report.write(f"New hash {newHash}\n")
-                        report.write("Status: ")
-                        if newHash == hash_value:
-                            report.write("Integrity verified\n")
-                        else:
-                            report.write("Integrity check failed\n")
-                else:
-                    report.write("File not found\n")
-                report.write("\n")
-        print(f"Report generated: {report_file}")
-
+            if len(self._data) != 0:
+                self._generateFromData(report)
+            else:
+                self._generateReportFromDatabase(report)
 # private methods
+
+    def _generateFromData(self,report):
+        for file_path, hash_info in self._data.items():
+            report.write(f"File: {file_path}\n")
+            report.write(f"Hash type: {self.typeHash.value}\n")
+            if self.typeEncrypt is not None:
+                report.write(f"Type encrypt: {self.typeEncrypt.value}\n")
+                report.write(f"Hash Encrypted: {hash_info['encrypted_hash']}\n")
+            report.write(f"Size hash = {512 if len(hash_info) == 128 else 256}\n")
+            report.write(f"Hash Value: ")
+
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as file:
+                    data = file.read()
+                    newHash = self._get_hash_for_report(data, self._systemHash)
+                    hash_value = self._getHash(self._getDecryptHash, file_path)
+                    report.write(f"{hash_value} \n")
+                    report.write(f"New hash {newHash}\n")
+                    report.write("Status: ")
+                    if newHash == hash_value:
+                        report.write("Integrity verified\n")
+                    else:
+                        report.write("Integrity check failed\n")
+            else:
+                report.write("File not found\n")
+            report.write("\n")
+
+    def _generateReportFromDatabase(self,report):
+        record = self._db.get_data()
+        for elem in record:
+            report.write(f"File: {elem[1]}\n")
+            report.write(f"Hash type: {elem[4]}\n")
+            #absolute_path 1, hash 2, encrypted_hash 3, type_hash 4,
+            # type_encrypted 5, extra_info_encryption 6, hash_key_encrypted 7, body_file
+            if self.typeEncrypt is not None:
+                report.write(f"Type encrypt: {elem[5]}\n")
+                report.write(f"Hash Encrypted: {elem[3]}\n")
+            report.write(f"Size hash = {512 if len(elem[2]) == 128 else 256}\n")
+            report.write(f"Hash Value: ")
+            file_path = elem[1]
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as file:
+                    data = file.read()
+                    newHash = self._get_hash_for_report(data, self._systemHash)
+                    report.write(f"{elem[2]} \n")
+                    report.write(f"New hash {newHash}\n")
+                    report.write("Status: ")
+                    if newHash == elem[2]:
+                        report.write("Integrity verified\n")
+                    else:
+                        report.write("Integrity check failed\n")
+            else:
+                report.write("File not found\n")
+            report.write("\n")
 
     def _get_hash_for_report(self, data, hash_function):
         if self.typeHash == Hashs.SHA:
@@ -129,6 +161,7 @@ class DataIntegrityChecker:
             return shake128_hash.hex()
 
         return hash_function.hexdigest()
+
 
 
     def _recordEncryptHash(self,hash_value,file_path):
