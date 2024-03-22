@@ -33,7 +33,7 @@ class DataIntegrityChecker:
 
     def hashingFile(self, file_path):
         if os.path.exists(file_path):
-            pass  # "Overload methods")
+            return True  # "Overload methods")
         else:
             print(f"File '{file_path}' not found.")
             logging.error(f"File '{file_path}' not found.")
@@ -54,9 +54,11 @@ class DataIntegrityChecker:
         if encryptMethod is None:
             self._encryptMethod = None
             self.typeEncrypt = None
+            print("Off encrypt")
         else:
             _validate_type(encryptMethod, str, "encryptMethod")
             self._set_system_encrypt(encryptMethod)
+            print("Set encrypt")
 
     def deleteHashByPath(self, file_path):
         self._db.delete_by_absolute_path(file_path)
@@ -67,13 +69,16 @@ class DataIntegrityChecker:
     def get_data_by_file_path(self, file_path):
         return self._db.get_data(file_path)
 
+    def get_type_hash_file(self,file_path):
+        return self._db.get_data(file_path)
+
     # private methods
     def _get_prev_hash(self, file_path):
         record = self.get_data_by_file_path(file_path)
         return record[2] if record is not None else ''
 
     def _record_to_db(self, hash_value, file_path, content):
-        cipher = iv = tag = key = None
+        cipher = iv = key = None
         if self.typeEncrypt is not None:
             cipher, iv, key = self._encryptMethod.encrypt_hash(content)
         self._data[file_path] = hash_value
@@ -99,15 +104,21 @@ class DataIntegrityChecker:
         return differences
 
     def _set_system_encrypt(self, typeEncrypt):
+        if isinstance(typeEncrypt,EncryptMethods):
+            typeEncrypt = typeEncrypt.value
+
         if typeEncrypt == EncryptMethods.AES.value:
+            print("Set AES")
             self.typeEncrypt = EncryptMethods.AES
             self._encryptMethod = EncryptAES(16)
         elif typeEncrypt == EncryptMethods.DES.value:
+            print("Set DES")
             self.typeEncrypt = EncryptMethods.DES
             self._encryptMethod = EncryptDES(8)
         else:
             self.typeEncrypt = None
             self._encryptMethod = None
+        print(self.typeEncrypt)
 
     def _setup_logging(self):
         logging.basicConfig(filename='data_integrity.log', level=logging.INFO,

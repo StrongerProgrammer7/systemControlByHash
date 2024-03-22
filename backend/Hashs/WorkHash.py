@@ -23,10 +23,10 @@ class WorkHash():
         self._set_system_hash(encryptMethod)
 
     def hashing_file(self, file_path):
-        self.methodHash.hashingFile(file_path)
+        return self.methodHash.hashingFile(file_path)
 
     def check_file(self, file_path):
-        self.methodHash.check_integrity(file_path)
+        return self.methodHash.check_integrity(file_path)
 
     def delete_hash_file(self, file_path):
         self.methodHash.deleteHashByPath(file_path)
@@ -51,6 +51,8 @@ class WorkHash():
 
     def get_data_by_file_path(self,file_path):
         record = self.methodHash.get_data_by_file_path(file_path)
+        if record is None:
+            return None
         data = [record[1],record[2],record[3],record[4],record[5],record[8]]
         return data
 
@@ -64,6 +66,7 @@ class WorkHash():
             self.methodHash = SHA(self.sizeHash, encryptMethod)
         elif self.typeHash == Hashs.SHAKE128:
             self.methodHash = SHAKE(self.sizeHash, encryptMethod)
+        print("type hash succes changed")
 
     def _set_type_hash(self, typeHash: str) -> None:
         if typeHash == Hashs.STRIBOG.value:
@@ -87,6 +90,7 @@ class WorkHash():
         for elem in record:
             report.write(f"File: {elem[1]}\n")
             report.write(f"Hash type: {elem[4]}\n")
+            print(elem[5])
             if elem[5] is not None:
                 report.write(f"Type encrypt: {elem[5]}\n")
                 report.write(f"Hash Encrypted: {elem[3]}\n")

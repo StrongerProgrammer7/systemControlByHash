@@ -11,7 +11,10 @@ class Stribog(DataIntegrityChecker):
 
     @overrides
     def hashingFile(self, file_path):
-        super().hashingFile(file_path)
+        isAccess = super().hashingFile(file_path)
+        if isAccess == False:
+            return isAccess
+
         with open(file_path, "rb") as file:
             data = file.read()
             hash_value = self.get_hash(data)
@@ -20,6 +23,7 @@ class Stribog(DataIntegrityChecker):
 
             print(f"File '{file_path}' added with hash value: {hash_value}")
             logging.info(f"File '{file_path}' added with hash value: {hash_value}")
+            return True
 
     @overrides
     def check_integrity(self, file_path):

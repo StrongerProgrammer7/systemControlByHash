@@ -1,24 +1,9 @@
+import os
 import tkinter as tk
 from tkinter import filedialog, ttk
-from backend.SHA import SHA
-from backend.Stribog import Stribog, EncryptMethods
-from backend.SHAKE import SHAKE
-from backend.utils import add_text_to_file, clear_and_write
 
-from ui.ui import *
-
-from backend.BD_system.work_with_db import CRUD
-
-db = CRUD()
-def workHash(hash, file_path):
-    hash.hashingFile(file_path)
-    clear_and_write("test_files/example2.txt", "test_files/ex3.txt")
-    hash.check_integrity(file_path)
-
-
-def generateReport(hash):
-    hash.generate_report()
-
+from backend.Hashs.WorkHash import WorkHash
+# from ui.ui import *
 
 def choose_file():
     file_path = filedialog.askopenfilename()
@@ -31,6 +16,9 @@ def choose_file():
         button_report.config(state=tk.NORMAL)
         # Сохраняем путь к выбранному файлу для последующего использования
         root.file_path = file_path
+        toggle_button_state(button_hash)
+        toggle_button_state(button_check_integrity)
+        toggle_button_state(algorithm_combobox)
 
 
 def read_file_content(file_path):
@@ -51,47 +39,42 @@ def update_text_widget(file_name, file_content):
 
 def compute_hash():
     algorithm = algorithm_combobox.get()
-    if algorithm == "Stribog":
-        checker = Stribog(256, encryptMethod=None)
-    elif algorithm == "SHA":
-        checker = SHA(256, encryptMethod=None)
-    elif algorithm == "SHAKE":
-        checker = SHAKE(256)
-    workHash(checker, root.file_path)
-
+    changeChecker(algorithm)
+    success = checker.hashing_file(root.file_path)
+    if success:
+        tk.messagebox.showinfo("Хэш", "Успешно выполнен")
+    else:
+        tk.messagebox.showerror("Хэш", "Проблемы с хэшированием проверьте файл")
 
 def generate_report():
-    algorithm = algorithm_combobox.get()
-    if algorithm == "Stribog":
-        checker = Stribog(256, encryptMethod=None)
-    elif algorithm == "SHA":
-        checker = SHA(256, encryptMethod=None)
-    elif algorithm == "SHAKE":
-        checker = SHAKE(256)
-    generateReport(checker)
+    checker.generate_report()
 
+
+def changeChecker(algorithm):
+    if algorithm == "Stribog":
+        checker.changeTypeHash("STRIBOG")
+    elif algorithm == "SHA":
+        checker.changeTypeHash("SHA")
+    else:
+        checker.changeTypeHash("SHAKE")
 
 def check_integrity():
     algorithm = algorithm_combobox.get()
-    if algorithm == "Stribog":
-        checker = Stribog(256, encryptMethod=None)
-    elif algorithm == "SHA":
-        checker = SHA(256, encryptMethod=None)
-    elif algorithm == "SHAKE":
-        checker = SHAKE(256)
-    record = db.get_data(root.file_path)
-    if record:
-        with open(root.file_path, 'rb') as file:
-            file_data = file.read()
-            hash_value = hash(file_data)  # Рассчитываем хэш файла
+    data = checker.get_data_by_file_path(root.file_path)
 
-        if record[2] == hash_value:  # Проверяем совпадение хэшей
-            tk.messagebox.showinfo("Проверка целостности", "Хэши совпадают.")
-        else:
-            display_difference(record)
-    else:
+    if data is None:
         tk.messagebox.showerror("Проверка целостности", "Файл не найден в базе данных.")
+    type_hash_for_file = data[3]
+    changeChecker(type_hash_for_file)
+    diff = checker.check_file(root.file_path)
+    print(diff)
+    if diff is not None and len(diff) > 0:
+        tk.messagebox.showerror("Проверка целостности", "Хэши не совпадают, см различия")
+        display_difference(diff)
+    else:
+        tk.messagebox.showinfo("Проверка целостности", "Хэши совпадают.")
 
+    changeChecker(algorithm)
 
 def display_difference(record):
     diff_window = tk.Toplevel(root)
@@ -100,19 +83,45 @@ def display_difference(record):
     diff_text_widget = tk.Text(diff_window, wrap="word", height=10)
     diff_text_widget.pack(fill="both", expand=True)
 
-    diff_text_widget.insert(tk.END, "Абсолютный путь файла: {}\n".format(record[1]))
-    diff_text_widget.insert(tk.END, "Хэш в базе данных: {}\n".format(record[2]))
-    diff_text_widget.insert(tk.END, "Хэш, рассчитанный сейчас: {}\n".format(hash_value))
-    diff_text_widget.insert(tk.END, "Тип хэша: {}\n".format(record[4]))
-    if record[5]:
-        diff_text_widget.insert(tk.END, "Тип шифрования: {}\n".format(record[5]))
-    if record[6]:
-        diff_text_widget.insert(tk.END, "Дополнительная информация о шифровании: {}\n".format(", ".join(record[6])))
-    if record[7]:
-        diff_text_widget.insert(tk.END, "Ключ для расшифровки хэша: {}\n".format(record[7]))
+    for elem in record:
+        diff_text_widget.insert(tk.END,elem)
 
+    # diff_text_widget.insert(tk.END, "Абсолютный путь файла: {}\n".format(record[1]))
+    # diff_text_widget.insert(tk.END, "Хэш в базе данных: {}\n".format(record[2]))
+    # diff_text_widget.insert(tk.END, "Хэш, рассчитанный сейчас: {}\n".format(hash_value))
+    # diff_text_widget.insert(tk.END, "Тип хэша: {}\n".format(record[4]))
+    # if record[5]:
+    #     diff_text_widget.insert(tk.END, "Тип шифрования: {}\n".format(record[5]))
+    # if record[6]:
+    #     diff_text_widget.insert(tk.END, "Дополнительная информация о шифровании: {}\n".format(", ".join(record[6])))
+    # if record[7]:
+    #     diff_text_widget.insert(tk.END, "Ключ для расшифровки хэша: {}\n".format(record[7]))
+
+def checkbox_changed(event):
+    if checkbox1["state"] != tk.DISABLED:
+        if checkbox1_var.get() == 0:
+            checker.set_encrypt_method("DES")
+        else:
+            checker.set_encrypt_method(None)
+
+def pastKey():
+    file_path = filedialog.askopenfilename()
+    if file_path:
+        print("Выбранный файл:", file_path)
+        tk.messagebox.showinfo("Ключи", "ключи загружены")
+        toggle_button_state(checkbox1)
+
+def toggle_button_state(elem):
+    state = elem['state']
+    elem['state'] = tk.NORMAL
+    # if state == tk.NORMAL:
+    #     elem['state'] = tk.DISABLED  # Если кнопка активна, делаем ее неактивной
+    # else:
+    #     elem['state'] = tk.NORMAL  # Если кнопка неактивна, делаем ее активной
 
 if __name__ == '__main__':
+    global checker
+    checker =WorkHash(256, "STRIBOG")
     # Создание главного окна
     root = tk.Tk()
     root.title("Выбор файла")
@@ -122,30 +131,31 @@ if __name__ == '__main__':
 
     # Создание кнопки для выбора файла и установка положения
     button_choose = tk.Button(root, text="Выбрать файл", command=choose_file)
-    button_choose.pack(pady=20, padx=20, side=tk.LEFT)
+    button_hash = tk.Button(root, text="Захэшировать", command=compute_hash,state=tk.DISABLED)
+    button_report = tk.Button(root, text="Сгенерировать отчет", command=generate_report)
+    button_check_integrity = tk.Button(root, text="Проверить целостность", command=check_integrity,state=tk.DISABLED)
+    btn_past_key = tk.Button(root, text="Считать ключи", command=pastKey)
 
-    # Создание текстового виджета для отображения названия файла и его содержимого
-    text_widget = tk.Text(root, wrap="word", height=20)
-    text_widget.pack(fill="both", expand=True)
+    button_choose.grid(row=0, column=0, sticky="ew")
+    button_hash.grid(row=1, column=0, sticky="ew")
+    button_report.grid(row=2, column=0, sticky="ew")
+    button_check_integrity.grid(row=3, column=0, sticky="ew")
+    btn_past_key.grid(row=4, column=0, sticky="ew")
+
+    text_widget = tk.Text(root, wrap="word", height=20, width=60)
+    text_widget.grid(row=0, column=1, rowspan=3, sticky="nsew")
     text_widget.config(state=tk.DISABLED)  # Начальное состояние виджета - только для чтения
 
-    # Создание выпадающего списка для выбора алгоритма хэширования
+
     algorithms = ["Stribog", "SHA", "SHAKE"]
-    algorithm_combobox = ttk.Combobox(root, values=algorithms)
-    algorithm_combobox.pack(pady=20, padx=20, side=tk.LEFT)
-    algorithm_combobox.set("Stribog")  # Установка значения по умолчанию
+    algorithm_combobox = ttk.Combobox(root, values=algorithms,state=tk.DISABLED)
+    algorithm_combobox.grid(row=4,column=1,padx=25,sticky="w")
+    algorithm_combobox.set("Stribog")
 
-    # Создание кнопки для вычисления хэша файла
-    button_hash = tk.Button(root, text="Хэш", command=compute_hash)
-    button_hash.pack(pady=20, padx=20, side=tk.RIGHT)
-
-    # Создание кнопки для генерации отчета
-    button_report = tk.Button(root, text="Сгенерировать отчет", command=generate_report)
-    button_report.pack(pady=20, padx=20, side=tk.RIGHT)
-
-    # Создание кнопки для проверки целостности файла
-    button_check_integrity = tk.Button(root, text="Проверить целостность", command=check_integrity)
-    button_check_integrity.pack(pady=20, padx=20, side=tk.BOTTOM)
-
+    checkbox1_var = tk.IntVar()
+    checkbox1 = tk.Checkbutton(root, text="DES", variable=checkbox1_var,state=tk.DISABLED)
+    checkbox1.grid(row=4, column=1, padx=25,sticky="e")
+    checkbox1.bind("<Button-1>", checkbox_changed)
+   # btn_past_key.bind("<Button-1>",lambda event: toggle_button_state())
     # Запуск цикла обработки событий
     root.mainloop()

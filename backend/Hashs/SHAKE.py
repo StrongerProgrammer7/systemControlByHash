@@ -35,7 +35,7 @@ class SHAKE(DataIntegrityChecker):
             if new_hash == prev_hash:
                 logging.info(f"Integrity {self.typeHash} of '{file_path}' verified.")
                 print(f"Integrity of '{file_path}' verified.")
-                return True
+                return []
             else:
                 logging.warning(f"Integrity check {self.typeHash} failed for '{file_path}'.")
                 print(f"Integrity check failed for '{file_path}'.")
