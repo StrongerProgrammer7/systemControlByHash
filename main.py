@@ -64,6 +64,11 @@ def check_integrity():
 
     if data is None:
         tk.messagebox.showerror("Проверка целостности", "Файл не найден в базе данных.")
+
+    if data[4] is not None and checkbox1_var.get() == 0:
+        tk.messagebox.showerror("Нарушения доступа", "Для сравнения хэша шифрованного смс необходимо загрузить ключи или включить режим шифрования!")
+        return
+
     type_hash_for_file = data[3]
     changeChecker(type_hash_for_file)
     diff = checker.check_file(root.file_path)

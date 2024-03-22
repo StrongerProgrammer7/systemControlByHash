@@ -4,17 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1b83601b-dd5e-4ddf-bdfe-4aa19389ebda" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/Hashs/DataIntegrityChecker.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Hashs/DataIntegrityChecker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/Hashs/SHA.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Hashs/SHA.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/Hashs/SHAKE.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Hashs/SHAKE.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/Hashs/Stribog.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Hashs/Stribog.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/Hashs/WorkHash.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Hashs/WorkHash.py" afterDir="false" />
+    <list default="true" id="1b83601b-dd5e-4ddf-bdfe-4aa19389ebda" name="Changes" comment="Refactor UI and backend">
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_files/ex3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/test_files/ex3.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_files/example2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/test_files/example2.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_files/temp.txt" beforeDir="false" afterPath="$PROJECT_DIR$/test_files/temp.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,13 +96,22 @@
       <option name="project" value="LOCAL" />
       <updated>1711028592052</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Refactor UI and backend">
+      <option name="closed" value="true" />
+      <created>1711105365232</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1711105365232</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Добавляю ui" />
     <MESSAGE value="this was a check" />
-    <option name="LAST_COMMIT_MESSAGE" value="this was a check" />
+    <MESSAGE value="Refactor UI and backend" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor UI and backend" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
