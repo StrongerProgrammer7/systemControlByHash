@@ -23,9 +23,9 @@ Report in file.txt
 
 ## Team
 
-- Maskim Petrenko (back-end and database)
-- Vsevolod Epiphancev (front-end)
-- Abduykov Zufar (back-end and front-end) 
+- Maskim Petrenko (back-end and database) @Maks22242
+- Vsevolod Epiphancev (front-end) @Vsevolod1817
+- Abduykov Zufar (back-end and front-end)  @StrongerProgrammer7
 
 ### Using library Stribog
 
